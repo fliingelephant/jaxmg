@@ -4,13 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jaxmg"
-version = "0.0.2"
+version = "0.0.3"
 description = "JAXMg provides a C++ interface between JAX and cuSolverMg, NVIDIA's multi-GPU linear solver. "
 authors = [{ name = "Roeland Wiersema" }]
 classifiers = ["Programming Language :: Python :: 3"]
 dependencies = [
-    "jax>=0.6.1; sys_platform == 'darwin'",
-    "jax[cuda]>=0.6.1; sys_platform == 'linux'",
+    "jax>=0.6.2; sys_platform == 'linux'",
 ]
 readme = "README.md"
 requires-python = ">=3.11"
@@ -27,12 +26,18 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 jaxmg = [
-    "bin/libcyclic.so",
-    "bin/libpotrs.so",
-    "bin/libpotrs_mp.so",
-    "bin/libpotri.so",
-    "bin/libsyevd.so",
-    "bin/libsyevd_no_V.so",
+    "cu12/libcyclic.so",
+    "cu12/libpotrs.so",
+    "cu12/libpotrs_mp.so",
+    "cu12/libpotri.so",
+    "cu12/libsyevd.so",
+    "cu12/libsyevd_no_V.so",
+    "cu13/libcyclic.so",
+    "cu13/libpotrs.so",
+    "cu13/libpotrs_mp.so",
+    "cu13/libpotri.so",
+    "cu13/libsyevd.so",
+    "cu13/libsyevd_no_V.so",
 ]
 
 [project.optional-dependencies]
@@ -57,4 +62,20 @@ dev = [
     "mkdocs-exclude==1.0.2",
     "mkdocs-ipynb==0.1.1",
     "hippogriffe==0.2.2",
+]
+
+cuda12 = [
+    "jax[cuda12]>=0.7.2"
+]
+
+cuda13 = [
+    "jax[cuda13]>=0.7.2"
+]
+
+cuda12-local = [
+    "jax[cuda12-local]>=0.6.2"
+]
+
+cuda13-local = [
+    "jax[cuda13-local]>=0.7.2"
 ]

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.25.2)
 project(JaxSolve)
 
 # Get CPM
@@ -14,6 +14,7 @@ include(${CPM_DOWNLOAD_LOCATION})
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}" ${CMAKE_MODULE_PATH})
 
 # Static linking against C++20 standard library
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -26,6 +27,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -stdlib=libc++ -static-libgcc")
 endif()
 
+# Abseill headers
 CPMAddPackage(
     NAME absl
     GIT_REPOSITORY https://github.com/abseil/abseil-cpp
@@ -37,19 +39,36 @@ find_package(CUDAToolkit REQUIRED)
 find_library(CUSOLVERMG_LIB cusolverMg
     HINTS "${CUDAToolkit_LIBRARY_DIR}" "${CUDA_TOOLKIT_ROOT_DIR}/lib64" "/usr/local/cuda/lib64"
     REQUIRED)
-# Import CUDAToolkit (Requires CUDA_HOME to be set)
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}" ${CMAKE_MODULE_PATH})
 find_package(CUDNN REQUIRED)
 message(STATUS "CUDA include directory: $ENV{CUDA_ROOT}")
 message(STATUS "CUDNN include directory: $ENV{CUDNN_ROOT}")
 # Enable CUDA 
 enable_language(CUDA)
+## Set backend install subdirectory based on CUDA major version
+string(REGEX MATCH "^([0-9]+)\.([0-9]+)" _cuda_ver_match "${CMAKE_CUDA_COMPILER_VERSION}")
+set(CUDA_MAJOR "${CMAKE_MATCH_1}")
+set(BIN_DST src/jaxmg/cu${CUDA_MAJOR})
+message(STATUS "Library install destination: ${CMAKE_SOURCE_DIR}/${BIN_DST}")
+
+# Ensure CUDA uses C++20 (required by this project)
+set(CMAKE_CUDA_STANDARD 20)
+set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 
 # Get Jaxlib
+# Allow overriding the JAX version via -DJAX_VERSION=0.x.y or env JAX_VERSION; default to 0.6.2
+if(NOT DEFINED JAX_VERSION OR JAX_VERSION STREQUAL "")
+    if(DEFINED ENV{JAX_VERSION} AND NOT "$ENV{JAX_VERSION}" STREQUAL "")
+        set(JAX_VERSION "$ENV{JAX_VERSION}")
+    else()
+        set(JAX_VERSION "0.6.2")
+    endif()
+endif()
+set(JAX_GIT_TAG "jax-v${JAX_VERSION}")
+message(STATUS "Using JAX version: ${JAX_VERSION} (tag: ${JAX_GIT_TAG})")
 CPMAddPackage(
     NAME jax
     GIT_REPOSITORY https://github.com/jax-ml/jax.git
-    GIT_TAG jax-v0.6.2
+    GIT_TAG ${JAX_GIT_TAG}
     DOWNLOAD_ONLY YES
 )
 message(STATUS "Jax source directory: ${jax_SOURCE_DIR}")
@@ -73,12 +92,14 @@ execute_process(
 if(NOT ln_result EQUAL 0)
     message(FATAL_ERROR "Failed to create symlink for CUDA: $ENV{CUDA_ROOT}")
 endif()
+
+message(STATUS "Resolved cuDNN include dir: ${CUDNN_INCLUDE_PATH}")
 execute_process(
-    COMMAND ln -sfn $ENV{CUDNN_ROOT}/include ${CMAKE_SOURCE_DIR}/third_party/gpus/cudnn
+    COMMAND ln -sfn ${CUDNN_INCLUDE_PATH} ${CMAKE_SOURCE_DIR}/third_party/gpus/cudnn
     RESULT_VARIABLE ln_result
 )
 if(NOT ln_result EQUAL 0)
-    message(FATAL_ERROR "Failed to create symlink for CUDNN: $ENV{CUDNN_ROOT}/include")
+    message(FATAL_ERROR "Failed to create symlink for CUDNN include: ${CUDNN_INCLUDE_PATH}")
 endif()
 file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/xla/ffi)
 execute_process(
@@ -221,27 +242,28 @@ target_link_libraries(syevd_no_V
 )
 # Make install targets
 install(TARGETS cyclic
-    LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/src/jaxmg/bin
+    LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/${BIN_DST}
 )
 install(TARGETS potrs
-    LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/src/jaxmg/bin
+    LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/${BIN_DST}
 )
 install(TARGETS potrs_mp
-    LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/src/jaxmg/bin
+    LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/${BIN_DST}
 )
 install(TARGETS potri
-    LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/src/jaxmg/bin
+    LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/${BIN_DST}
 )
 install(TARGETS syevd
-    LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/src/jaxmg/bin
+    LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/${BIN_DST}
 )
 install(TARGETS syevd_no_V
-    LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/src/jaxmg/bin
+    LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/${BIN_DST}
 )
 
 # module load gcc/11.5.0 cudnn/9.2.0.82-12 cuda/12.8.0
+
 # cmake ..
-# cmake --build . --target install
+# cmake --build . --target install -j10
 # OR
 # cmake --build . --target cyclic && cmake --install .
 # cmake --build . --target potrs_mp && cmake --install .
