@@ -9,7 +9,7 @@ import jax
 coord_addr = sys.argv[1]
 proc_id = int(sys.argv[2])
 num_procs = int(sys.argv[3])
-import time
+
 # Initialize the GPU machines.
 jax.distributed.initialize(
     coordinator_address=coord_addr,
@@ -33,16 +33,15 @@ def _println(prefix: str, payload: dict):
 
 import jax.numpy as jnp
 from jax.sharding import NamedSharding, PartitionSpec as P
-from jaxmg import potrs, potrs_shardmap_ctx
 from functools import partial
-from jaxmg.utils import random_psd
-from jax.experimental import multihost_utils as mu
-from itertools import product
 
 
 # These will be initialized after jax.distributed.initialize()
 devices = [d for d in jax.devices() if d.platform == "gpu"]
 mesh = jax.make_mesh((jax.device_count(),), ("x",))
+
+from jaxmg import potrs, potrs_shardmap_ctx
+from jaxmg.utils import random_psd
 
 @partial(jax.jit, static_argnames=("_T_A",))
 def jitted_potrs(_a, _b, _T_A):
