@@ -3,9 +3,9 @@
 
 ### Small effort
 
-- **Implement multi-process variants of `potri` and `syevd`**. Right now we only have `potrs_mp.cu` which contains all the necessary machinery to also create multi-process equivalents of `potri.cu`, `syevd.cu` and `syevd_no_V.cu`.
+- ~~**Implement multi-process variants of `potri` and `syevd`**. Right now we only have `potrs_mp.cu` which contains all the necessary machinery to also create multi-process equivalents of `potri.cu`, `syevd.cu` and `syevd_no_V.cu`.~~ (#10)
 
-- **Get rid of compiler warnings** There is some unused code that needs to be removed. There are warnings due to things in JAXlib that we probably can't get rid of though.
+- ~~**Get rid of compiler warnings** There is some unused code that needs to be removed. There are warnings due to things in JAXlib that we probably can't get rid of though.~~ (#10)
 
 - **Better error handling**. There are parts of the code that simply throw `std::runtime_error`. We need to make the error handling compatible with the XLA_FFI error handlers like: `FFI_ASSIGN_OR_RETURN`, `JAX_FFI_RETURN_IF_GPU_ERROR`, etc... 
 
@@ -108,7 +108,7 @@ Get the latest built wheels from Jenkins:
 
 ```bash
 mkdir dist
-VERSION=0.0.3
+VERSION=0.0.4
 CUDA_FLAVOR=cuda12-local
 JAX_VERSION=0.8.1
 for PY in 3.11 3.12 3.13 3.14; do
@@ -128,5 +128,5 @@ python -m twine upload --repository testpypi dist/*
 ```
 Test the wheel
 ```bash
-pip install -i https://test.pypi.org/simple/ "jaxmg[cuda12]==0.0.3" --extra-index-url https://pypi.org/simple
+pip install -i https://test.pypi.org/simple/ "jaxmg[cuda12]==0.0.4" --extra-index-url https://pypi.org/simple
 ```

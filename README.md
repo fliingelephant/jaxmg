@@ -107,7 +107,7 @@ author = {Wiersema, Roeland},
 month = dec,
 title = {{JAXMg: distributed linear solvers in JAX}},
 url = {https://github.com/flatironinstitute/jaxmg},
-version = {0.0.3},
+version = {0.0.4},
 year = {2025}
 }
 ```
