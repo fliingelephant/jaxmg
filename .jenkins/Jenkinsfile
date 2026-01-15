@@ -1,5 +1,11 @@
 pipeline {
     agent none
+    options {
+        timeout(time: 2, unit: 'HOURS')
+    }
+    triggers {
+        cron '@monthly'
+    }
     stages {
         stage('Compile CUDA 12') {
             agent {
@@ -8,10 +14,6 @@ pipeline {
                     args '--gpus=2 --shm-size=4gb'
                     label 'docker && v100'
                 }
-            }
-
-            options {
-                timeout(time: 60, unit: 'MINUTES')
             }
             stages {
                 stage('Compile') {
@@ -45,10 +47,6 @@ pipeline {
                     label 'docker && v100'
                 }
             }
-
-            options {
-                timeout(time: 60, unit: 'MINUTES')
-            }
             stages {
                 stage('Compile') {
                     environment {
@@ -80,9 +78,6 @@ pipeline {
                     args '--gpus=2 --shm-size=4gb'
                     label 'docker && v100'
                 }
-            }
-            options {
-                timeout(time: 60, unit: 'MINUTES')
             }
             stages {
                 stage('Build + Test') {
@@ -143,7 +138,6 @@ pipeline {
                                                     python -c "import sys, jax; print(f'Python {sys.version_info[:2]}, JAX {jax.__version__}'); print(jax.devices()); import jaxmg"
                                                 '''
                                                 archiveArtifacts artifacts: "${WORKDIR}/dist_repaired/*.whl", onlyIfSuccessful: true
-                                            
                                             }
                                         }
                                         stage("Test ${c}-${p}-${j}") {
@@ -186,9 +180,6 @@ pipeline {
                     args '--gpus=2 --shm-size=4gb'
                     label 'docker && v100'
                 }
-            }
-            options {
-                timeout(time: 60, unit: 'MINUTES')
             }
             stages {
                 stage('Build + Test') {

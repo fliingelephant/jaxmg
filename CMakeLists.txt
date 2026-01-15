@@ -113,6 +113,13 @@ endif()
 
 # Set JAX_GPU_CUDA to 1 (this is required for jaxlib to compile correctly)
 add_definitions(-DJAX_GPU_CUDA=1)
+# Suppress host CUDA warning
+add_compile_options($<$<COMPILE_LANGUAGE:CUDA>:-diag-suppress=940,2473,2810>)
+# Suppress host C++ warnings from GCC/Clang (only for C++ sources)
+add_compile_options(
+  $<$<COMPILE_LANGUAGE:CXX>:-Wno-return-type>
+  $<$<COMPILE_LANGUAGE:CXX>:-Wno-attributes>
+)
 # Add libraries
 add_library(cyclic SHARED
     src/cuda/cyclic.cu
@@ -140,16 +147,37 @@ add_library(potri SHARED
     src/cuda/utils/shm.cc
     ${jax_SOURCE_DIR}/jaxlib/gpu/gpu_kernel_helpers.cc
 )
+add_library(potri_mp SHARED
+    src/cuda/potri_mp.cu
+    src/cuda/utils/jax_utils.cc
+    src/cuda/utils/shm.cc
+    src/cuda/utils/ipc_utils.cc
+    ${jax_SOURCE_DIR}/jaxlib/gpu/gpu_kernel_helpers.cc
+)
 add_library(syevd SHARED
     src/cuda/syevd.cu
     src/cuda/utils/jax_utils.cc
     src/cuda/utils/shm.cc
     ${jax_SOURCE_DIR}/jaxlib/gpu/gpu_kernel_helpers.cc
 )
+add_library(syevd_mp SHARED
+    src/cuda/syevd_mp.cu
+    src/cuda/utils/jax_utils.cc
+    src/cuda/utils/shm.cc
+    src/cuda/utils/ipc_utils.cc
+    ${jax_SOURCE_DIR}/jaxlib/gpu/gpu_kernel_helpers.cc
+)
 add_library(syevd_no_V SHARED
     src/cuda/syevd_no_V.cu
     src/cuda/utils/jax_utils.cc
     src/cuda/utils/shm.cc
+    ${jax_SOURCE_DIR}/jaxlib/gpu/gpu_kernel_helpers.cc
+)
+add_library(syevd_no_V_mp SHARED
+    src/cuda/syevd_no_V_mp.cu
+    src/cuda/utils/jax_utils.cc
+    src/cuda/utils/shm.cc
+    src/cuda/utils/ipc_utils.cc
     ${jax_SOURCE_DIR}/jaxlib/gpu/gpu_kernel_helpers.cc
 )
 
@@ -160,8 +188,11 @@ target_include_directories(cyclic PUBLIC ${CMAKE_SOURCE_DIR} ${jax_SOURCE_DIR} $
 target_include_directories(potrs PUBLIC ${CMAKE_SOURCE_DIR} ${jax_SOURCE_DIR} ${SRC_CUDA_INCLUDE} ${SRC_CUDA_ROOT})
 target_include_directories(potrs_mp PUBLIC ${CMAKE_SOURCE_DIR} ${jax_SOURCE_DIR} ${SRC_CUDA_INCLUDE} ${SRC_CUDA_ROOT})
 target_include_directories(potri PUBLIC ${CMAKE_SOURCE_DIR} ${jax_SOURCE_DIR} ${SRC_CUDA_INCLUDE} ${SRC_CUDA_ROOT})
+target_include_directories(potri_mp PUBLIC ${CMAKE_SOURCE_DIR} ${jax_SOURCE_DIR} ${SRC_CUDA_INCLUDE} ${SRC_CUDA_ROOT})
 target_include_directories(syevd PUBLIC ${CMAKE_SOURCE_DIR} ${jax_SOURCE_DIR} ${SRC_CUDA_INCLUDE} ${SRC_CUDA_ROOT})
+target_include_directories(syevd_mp PUBLIC ${CMAKE_SOURCE_DIR} ${jax_SOURCE_DIR} ${SRC_CUDA_INCLUDE} ${SRC_CUDA_ROOT})
 target_include_directories(syevd_no_V PUBLIC ${CMAKE_SOURCE_DIR} ${jax_SOURCE_DIR} ${SRC_CUDA_INCLUDE} ${SRC_CUDA_ROOT})
+target_include_directories(syevd_no_V_mp PUBLIC ${CMAKE_SOURCE_DIR} ${jax_SOURCE_DIR} ${SRC_CUDA_INCLUDE} ${SRC_CUDA_ROOT})
 
 # Set the CUDA architecture
 set_target_properties(cyclic PROPERTIES
@@ -176,10 +207,19 @@ set_target_properties(potrs_mp PROPERTIES
 set_target_properties(potri PROPERTIES
     CUDA_ARCHITECTURES "all"
 )
+set_target_properties(potri_mp PROPERTIES
+    CUDA_ARCHITECTURES "all"
+)
 set_target_properties(syevd PROPERTIES
     CUDA_ARCHITECTURES "all"
 )
+set_target_properties(syevd_mp PROPERTIES
+    CUDA_ARCHITECTURES "all"
+)
 set_target_properties(syevd_no_V PROPERTIES
+    CUDA_ARCHITECTURES "all"
+)
+set_target_properties(syevd_no_V_mp PROPERTIES
     CUDA_ARCHITECTURES "all"
 )
 
@@ -221,7 +261,25 @@ target_link_libraries(potri
     ${CUSOLVERMG_LIB}
     cuda
 )
+target_link_libraries(potri_mp
+    absl::strings
+    absl::status
+    absl::statusor
+    CUDA::cusolver
+    CUDA::cupti
+    ${CUSOLVERMG_LIB}
+    cuda
+)
 target_link_libraries(syevd
+    absl::strings
+    absl::status
+    absl::statusor
+    CUDA::cusolver
+    CUDA::cupti
+    ${CUSOLVERMG_LIB}
+    cuda
+)
+target_link_libraries(syevd_mp
     absl::strings
     absl::status
     absl::statusor
@@ -232,6 +290,15 @@ target_link_libraries(syevd
 )
 
 target_link_libraries(syevd_no_V
+    absl::strings
+    absl::status
+    absl::statusor
+    CUDA::cusolver
+    CUDA::cupti
+    ${CUSOLVERMG_LIB}
+    cuda
+)
+target_link_libraries(syevd_no_V_mp
     absl::strings
     absl::status
     absl::statusor
@@ -253,10 +320,19 @@ install(TARGETS potrs_mp
 install(TARGETS potri
     LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/${BIN_DST}
 )
+install(TARGETS potri_mp
+    LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/${BIN_DST}
+)
 install(TARGETS syevd
     LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/${BIN_DST}
 )
+install(TARGETS syevd_mp
+    LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/${BIN_DST}
+)
 install(TARGETS syevd_no_V
+    LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/${BIN_DST}
+)
+install(TARGETS syevd_no_V_mp
     LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/${BIN_DST}
 )
 
