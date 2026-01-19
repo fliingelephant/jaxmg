@@ -89,7 +89,7 @@ def potrs(
     spec_a, spec_b = in_specs
     if (spec_a._partitions[0] == None) or (spec_a._partitions[1] != None):
         raise ValueError(
-            "A must be sharded along the columns with PartitionSpec P(None, str)."
+            "A must be sharded along the rows with PartitionSpec P(str, None)."
         )
     if spec_b != P(None, None):
         raise ValueError(
