@@ -154,6 +154,19 @@ add_library(potri_mp SHARED
     src/cuda/utils/ipc_utils.cc
     ${jax_SOURCE_DIR}/jaxlib/gpu/gpu_kernel_helpers.cc
 )
+add_library(potrf SHARED
+    src/cuda/potrf.cu
+    src/cuda/utils/jax_utils.cc
+    src/cuda/utils/shm.cc
+    ${jax_SOURCE_DIR}/jaxlib/gpu/gpu_kernel_helpers.cc
+)
+add_library(potrf_mp SHARED
+    src/cuda/potrf_mp.cu
+    src/cuda/utils/jax_utils.cc
+    src/cuda/utils/shm.cc
+    src/cuda/utils/ipc_utils.cc
+    ${jax_SOURCE_DIR}/jaxlib/gpu/gpu_kernel_helpers.cc
+)
 add_library(syevd SHARED
     src/cuda/syevd.cu
     src/cuda/utils/jax_utils.cc
@@ -189,6 +202,8 @@ target_include_directories(potrs PUBLIC ${CMAKE_SOURCE_DIR} ${jax_SOURCE_DIR} ${
 target_include_directories(potrs_mp PUBLIC ${CMAKE_SOURCE_DIR} ${jax_SOURCE_DIR} ${SRC_CUDA_INCLUDE} ${SRC_CUDA_ROOT})
 target_include_directories(potri PUBLIC ${CMAKE_SOURCE_DIR} ${jax_SOURCE_DIR} ${SRC_CUDA_INCLUDE} ${SRC_CUDA_ROOT})
 target_include_directories(potri_mp PUBLIC ${CMAKE_SOURCE_DIR} ${jax_SOURCE_DIR} ${SRC_CUDA_INCLUDE} ${SRC_CUDA_ROOT})
+target_include_directories(potrf PUBLIC ${CMAKE_SOURCE_DIR} ${jax_SOURCE_DIR} ${SRC_CUDA_INCLUDE} ${SRC_CUDA_ROOT})
+target_include_directories(potrf_mp PUBLIC ${CMAKE_SOURCE_DIR} ${jax_SOURCE_DIR} ${SRC_CUDA_INCLUDE} ${SRC_CUDA_ROOT})
 target_include_directories(syevd PUBLIC ${CMAKE_SOURCE_DIR} ${jax_SOURCE_DIR} ${SRC_CUDA_INCLUDE} ${SRC_CUDA_ROOT})
 target_include_directories(syevd_mp PUBLIC ${CMAKE_SOURCE_DIR} ${jax_SOURCE_DIR} ${SRC_CUDA_INCLUDE} ${SRC_CUDA_ROOT})
 target_include_directories(syevd_no_V PUBLIC ${CMAKE_SOURCE_DIR} ${jax_SOURCE_DIR} ${SRC_CUDA_INCLUDE} ${SRC_CUDA_ROOT})
@@ -208,6 +223,12 @@ set_target_properties(potri PROPERTIES
     CUDA_ARCHITECTURES "all"
 )
 set_target_properties(potri_mp PROPERTIES
+    CUDA_ARCHITECTURES "all"
+)
+set_target_properties(potrf PROPERTIES
+    CUDA_ARCHITECTURES "all"
+)
+set_target_properties(potrf_mp PROPERTIES
     CUDA_ARCHITECTURES "all"
 )
 set_target_properties(syevd PROPERTIES
@@ -270,6 +291,24 @@ target_link_libraries(potri_mp
     ${CUSOLVERMG_LIB}
     cuda
 )
+target_link_libraries(potrf
+    absl::strings
+    absl::status
+    absl::statusor
+    CUDA::cusolver
+    CUDA::cupti
+    ${CUSOLVERMG_LIB}
+    cuda
+)
+target_link_libraries(potrf_mp
+    absl::strings
+    absl::status
+    absl::statusor
+    CUDA::cusolver
+    CUDA::cupti
+    ${CUSOLVERMG_LIB}
+    cuda
+)
 target_link_libraries(syevd
     absl::strings
     absl::status
@@ -323,6 +362,12 @@ install(TARGETS potri
 install(TARGETS potri_mp
     LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/${BIN_DST}
 )
+install(TARGETS potrf
+    LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/${BIN_DST}
+)
+install(TARGETS potrf_mp
+    LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/${BIN_DST}
+)
 install(TARGETS syevd
     LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/${BIN_DST}
 )
@@ -347,4 +392,3 @@ install(TARGETS syevd_no_V_mp
 # cmake --build . --target potri && cmake --install .
 # cmake --build . --target syevd && cmake --install .
 # cmake --build . --target syevd_no_V && cmake --install .
-

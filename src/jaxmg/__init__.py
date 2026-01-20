@@ -84,6 +84,10 @@ if any("gpu" == d.platform for d in jax.devices()):
             os.path.dirname(__file__), f"{bin_dir}/libpotri.so"
         )
         library_potri = ctypes.cdll.LoadLibrary(SHARED_LIBRARY_POTRI)
+        SHARED_LIBRARY_POTRF = os.path.join(
+            os.path.dirname(__file__), f"{bin_dir}/libpotrf.so"
+        )
+        library_potrf = ctypes.cdll.LoadLibrary(SHARED_LIBRARY_POTRF)
         SHARED_LIBRARY_SYEVD = os.path.join(
             os.path.dirname(__file__), f"{bin_dir}/libsyevd.so"
         )
@@ -101,6 +105,9 @@ if any("gpu" == d.platform for d in jax.devices()):
         )
         jax.ffi.register_ffi_target(
             "potri_mg", jax.ffi.pycapsule(library_potri.PotriMgFFI), platform="CUDA"
+        )
+        jax.ffi.register_ffi_target(
+            "potrf_mg", jax.ffi.pycapsule(library_potrf.PotrfMgFFI), platform="CUDA"
         )
         jax.ffi.register_ffi_target(
             "syevd_mg", jax.ffi.pycapsule(library_syevd.SyevdMgFFI), platform="CUDA"
@@ -121,6 +128,10 @@ if any("gpu" == d.platform for d in jax.devices()):
             os.path.dirname(__file__), f"{bin_dir}/libpotri_mp.so"
         )
         library_potri_mp = ctypes.cdll.LoadLibrary(SHARED_LIBRARY_POTRI_MP)
+        SHARED_LIBRARY_POTRF_MP = os.path.join(
+            os.path.dirname(__file__), f"{bin_dir}/libpotrf_mp.so"
+        )
+        library_potrf_mp = ctypes.cdll.LoadLibrary(SHARED_LIBRARY_POTRF_MP)
         SHARED_LIBRARY_SYEVD_MP = os.path.join(
             os.path.dirname(__file__), f"{bin_dir}/libsyevd_mp.so"
         )
@@ -141,6 +152,11 @@ if any("gpu" == d.platform for d in jax.devices()):
             platform="CUDA",
         )
         jax.ffi.register_ffi_target(
+            "potrf_mg",
+            jax.ffi.pycapsule(library_potrf_mp.PotrfMgMpFFI),
+            platform="CUDA",
+        )
+        jax.ffi.register_ffi_target(
             "syevd_mg",
             jax.ffi.pycapsule(library_syevd_mp.SyevdMgMpFFI),
             platform="CUDA",
@@ -152,6 +168,7 @@ if any("gpu" == d.platform for d in jax.devices()):
         )
     from ._potrs import potrs, potrs_shardmap_ctx
     from ._potri import potri, potri_shardmap_ctx, potri_symmetrize
+    from ._potrf import potrf, potrf_shardmap_ctx
     from ._syevd import syevd, syevd_shardmap_ctx
 
 else:
@@ -162,6 +179,7 @@ else:
     )
     from ._potrs import potrs, potrs_shardmap_ctx
     from ._potri import potri, potri_shardmap_ctx, potri_symmetrize
+    from ._potrf import potrf, potrf_shardmap_ctx
     from ._syevd import syevd, syevd_shardmap_ctx
 
     os.environ["JAXMG_NUMBER_OF_DEVICES"] = str(jax.device_count())
@@ -182,6 +200,8 @@ __all__ = [
     "potri",
     "potri_shardmap_ctx",
     "potri_symmetrize",
+    "potrf",
+    "potrf_shardmap_ctx",
     "syevd",
     "syevd_shardmap_ctx",
     "cyclic_1d",
